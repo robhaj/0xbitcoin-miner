@@ -1,0 +1,47 @@
+//gpuminer.cc
+
+//PLEASE REFERENCE THE NODEJS c++ ADDON DOCS !!!!!!!!
+//https://nodejs.org/api/addons.html
+
+
+
+//build with
+//    node-gyp configure build --target=v8.9.4
+
+/*
+There is a total bounty of 1 Ether and 1000 0xBTC tokens that will be split up and given to contributors to this as reward
+
+
+This c++ addon will be provided uint256 numbers: X, Y and T
+Where X is an ethereum address
+Y is the 'challenge number'
+T is the target
+
+This c++ addon will continuously run a loop in which:
+  1. A random number is generated - called a Nonce
+  2. A result is found of S = Keccak256(nonce,X,Y)
+  3. If S < T then we will push S to an array
+
+
+From javascript, we will provide X, Y , and T to this addon and we will read back solutions (S) from the array
+
+
+*/
+
+#include <node.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuda.h>
+#include <ctime>
+#include <string>
+#include <thread>
+#include "keccak256.h"
+
+namespace gpuminer {
+
+using v8::FunctionCallbackInfo;
+using v8::Isolate;
+using v8::Local;
+using v8::Object;
+using v8::String;
+using v8::Value;
