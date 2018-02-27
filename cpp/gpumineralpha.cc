@@ -1,3 +1,4 @@
+
 //gpuminer.cc
 
 //PLEASE REFERENCE THE NODEJS c++ ADDON DOCS !!!!!!!!
@@ -51,8 +52,7 @@ using v8::Number;
 //these are global variable accessible to both threads
 int difficultyTarget;
 int challengeNumber; //should this be a string ?
-int minerEthAddress;
-//string minerEthAddress = ""; //should this be astring ?
+char* minerEthAddress;
 
 int *solutions = new int[1000];
 int buffered_solutions_count = 0;
@@ -74,9 +74,7 @@ void setDifficultyTarget(const FunctionCallbackInfo<Value>& args) {
 void setEthAddress(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
-  minerEthAddress = args[0]->IntegerValue();
-
-  args.GetReturnValue().Set(minerEthAddress);
+  args.GetReturnValue().Set(args[0]);
 }
 
 //what am i doing ?
@@ -99,12 +97,12 @@ void getRandomNumberForNode(const FunctionCallbackInfo<Value>& args) {
 
 void pushSolutionToBuffer(int nonce)
 {
-  if(buffered_solutions_count < 1000)
+  if(buffered_solutions_count < 10000)
   {
       solutions[buffered_solutions_count] = nonce;
       buffered_solutions_count++;
   }else {
-    //too many queued solutions
+    printf("toomanyqueuedsolutions");
   }
 
 }
@@ -137,20 +135,16 @@ void clearSolutionsBuffer(const FunctionCallbackInfo<Value>& args) {
   // Needs to perform a keccak the same way that solidity/web3 does it!! Please see
   // https://web3js.readthedocs.io/en/1.0/web3-utils.html#utils-soliditysha3
 
-int keccak256(int args[])
+int keccak256(int nonce, char* ethAddress, int challengeNumber)
 {
-    int nonce = args[0];
-    int ethAddress = args[1];
-    int challengeNumber = args[2];
-
     uint32_t data[64];
     data[19] = nonce;
     uint32_t target[8];
     target[7] = challengeNumber;
     unsigned long hashes_done = 0;
-	
+
     scanhash_keccak256(1, data, target, 30, &hashes_done);
-	
+
     return nonce;
 }
 
@@ -174,15 +168,14 @@ void mine(){
 
     //generate random number -- nonce -- can we do this in the GPU -- should we ?
     int nonce = getRandomNumber();
-
-    int keccak_args[3] = {nonce, minerEthAddress, challengeNumber};
-
-    int result = keccak256(keccak_args);
-
+    printf("%d", nonce);
+    int result = keccak256(nonce, minerEthAddress, challengeNumber);
+printf("%d", result);
     if ( result < difficultyTarget)
     {
         //  Push the working nonce to an array !!
           pushSolutionToBuffer(nonce);
+//	  printf("WORKING NONCE FOUND!!");
     }
   }
 }
